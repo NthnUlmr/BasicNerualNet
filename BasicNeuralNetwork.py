@@ -38,7 +38,9 @@ import numpy.typing as npt
 class BasicNeuralNetwork:
     def __init__(self,input_size: int,hidden_size: int,output_size: int):
         scale_factor = 0.01
-
+        print("Input Size", input_size)
+        print("Hidden Size", hidden_size)
+        print("Output Size", output_size)
         self.weights = np.random.randn(hidden_size,output_size) * scale_factor
         self.bias = np.zeros((1,output_size))
 
@@ -60,7 +62,7 @@ class BasicNeuralNetwork:
 
     def forward(self, inputs: npt.ArrayLike):
         self.hidden_inputs = np.dot(inputs,self.weights_hidden) + self.bias_hidden
-        self.hidden_outputs = self.relu(self.hidden_inputs)
+        self.hidden_outputs = self.sigmoid(self.hidden_inputs)
         self.final_inputs = np.dot(self.hidden_outputs, self.weights) + self.bias
         self.final_outputs = self.final_inputs
         return self.final_outputs
@@ -75,7 +77,7 @@ class BasicNeuralNetwork:
 
         # Backpropagation
         hidden_errors = np.dot(output_delta, self.weights.T)
-        hidden_delta = np.multiply(hidden_errors,  self.relu_derivative(self.hidden_outputs))
+        hidden_delta = np.multiply(hidden_errors,  self.sigmoid_derivative(self.hidden_outputs))
 
         # Update weights and biases
         self.weights += np.dot(self.hidden_outputs.T, output_delta) * learning_rate
@@ -85,11 +87,7 @@ class BasicNeuralNetwork:
         self.bias_hidden += np.sum(hidden_delta, axis=0, keepdims=True) * learning_rate
 
         # Mean squared error
-        MAX_ERROR = 1e3
-        output_errors = np.where(output_errors < MAX_ERROR, MAX_ERROR, output_errors)
         loss = np.mean(np.power(output_errors,2.0))
-        print(loss)
-        loss = np.fmin(np.fabs(loss), MAX_ERROR)
         return loss
 
     # <GPLv3_Footer>

@@ -38,6 +38,55 @@ import numpy.typing as npt
 import matplotlib.pyplot as plt
 
 
+
+def load_data(path: str):
+
+    # Data is assumed to be formatted as follows:
+    # 0. All data is ascii
+    # 1. Each image consists of consecutive rows starting with a number
+    # 2. Only image data rows start with a number
+    # 3. Data Labels for the image follow the corresponding block of image data and their lines start with a space
+    # 4. Image data is either 0 or 1 for each pixel in a 32 by 32 grid
+
+    with open(path,'r+') as inFile:
+        lines = inFile.readlines()
+
+    data = []
+    labels = []
+    numIdx = 0
+
+    for line in lines:
+        line = line.strip('\n')
+        if line.isnumeric():
+            # Row of Image Data
+            if len(data) <= numIdx:
+                data.append([])
+            for dig in line:
+                data[numIdx].append(int(dig))
+        elif line[1:].isnumeric():
+            # Row of Label Data
+            digimon = [0.0]*10
+            digimon[int(line[1:])] = 1.0
+            labels.append(digimon)
+            numIdx = numIdx + 1
+        else:
+            pass # ignore other lines
+
+    data2 = []
+    for line in data:
+        tmpND = np.ndarray((1,len(line)-1), buffer=np.array(line),
+           offset=np.int_().itemsize,
+           dtype=int)
+        data2.append(tmpND)
+
+    assert(len(data) == len(labels))
+
+    return (data2, labels)
+
+
+
+
+
 def generate_data(num_samples: int, num_points: int, freq_range) -> npt.ArrayLike:
     X = np.zeros((num_samples, num_points))
     y = np.zeros(num_samples)
@@ -53,42 +102,23 @@ def generate_data(num_samples: int, num_points: int, freq_range) -> npt.ArrayLik
 
 
 def main():
-    np.random.seed(0)
-    num_samples = 10
-    num_points = 100
-    freq_range = (1.0, 10.0)  # Frequency range from 1Hz to 10Hz
-    X, y = generate_data(num_samples, num_points, freq_range)
 
-    # Plot some samples
-    plt.figure()
-    print(len(X))
-    for ii in range(len(X)):
-        plt.plot(np.linspace(0, 1, num_points), X[ii])
-    plt.title(f"Sample signal with frequency {y[0]:.2f} Hz")
-    plt.xlabel("Time")
-    plt.ylabel("Amplitude")
+    training_data_path = 'optical_recognition_of_handwritten_digits/optdigits-orig.tra'
+    (training_data, training_labels) = load_data(training_data_path)
 
-    # Normalize data
-    epsilon = 1e-6
-    X_mean = np.mean(X, axis=0)
-    X_std = np.std(X, axis=0)
-    X_std = np.where(X_std==0.0, epsilon, X_std)
-    X = (X - X_mean) / X_std
-    print(X)
-    # Initialize the neural network
-    input_size = num_points
-    hidden_size = 50
-    output_size = 1
+    print(training_data[0][0])
+    input_size = len(training_data[0][0])
+    hidden_size = len(training_data[0][0])
+    output_size = 10
+    nn = BasicNeuralNetwork(input_size, hidden_size, output_size)
     learning_rate = 0.01
-    epochs = 10
 
-    nn = BasicNeuralNetwork(input_size,hidden_size,output_size)
-
-    # Train the neural network
+    # Train
     losses = []
-    print_freq = 1
+    epochs = len(training_data)
+    print_freq = 100
     for epoch in range(epochs):
-        loss = nn.train(X, y.reshape(-1, 1), learning_rate)
+        loss = nn.train(training_data[epoch], training_labels[epoch], learning_rate)
         losses.append(loss)
         if epoch % print_freq == 0:
             print(f"Epoch {epoch}, Loss: {loss:.4f}")
@@ -100,29 +130,41 @@ def main():
     plt.xlabel("Epoch")
     plt.ylabel("Loss")
 
-    # Generate test data
-    X_test, y_test = generate_data(100, num_points, freq_range)
 
-    # Normalize test data
-    X_test = (X_test - X_mean) / X_std
+    test_data_path = 'optical_recognition_of_handwritten_digits/optdigits-orig.cv'
+    (test_data, test_labels) = load_data(test_data_path)
 
-    # Predict
-    predictions = nn.forward(X_test)
+    print(type(test_data))
+    predictions = nn.forward(test_data)
 
     # Plot predictions vs true values
     plt.figure()
-    plt.scatter(y_test, predictions)
-    plt.xlabel("True Frequencies")
-    plt.ylabel("Predicted Frequencies")
-    plt.title("True vs Predicted Frequencies")
+    plt.scatter(np.argmax(test_labels,axis=1), np.argmax(predictions,axis=2))
+    plt.xlabel("Labels")
+    plt.ylabel("Prediction")
+    plt.title("True vs Predicted Numbers")
 
     plt.figure()
-    plt.plot(y_test-predictions)
-    plt.xlabel("Test Num")
-    plt.ylabel("Frequency Error")
-    plt.title("True vs Predicted Frequencies")
+    test_errs = []
+    test_ids = []
+    for ii in range(len(test_labels)):
+        tmp = np.argmax(test_labels[ii]) - (np.argmax(predictions[ii]))
+        test_errs.append(tmp)
+        test_ids.append(ii)
 
+    plt.scatter(test_ids,test_errs)
+    plt.xlabel("Labels")
+    plt.ylabel("Prediction")
+    plt.title("True vs Predicted Numbers")
+
+
+    plt.figure()
+    plt.hist(test_errs)
+    plt.title("Histogram of Testing Error")
+    plt.xlabel("Error in Prediction")
+    plt.ylabel("Count")
     plt.show()
+
 
 
 if __name__ == '__main__':
