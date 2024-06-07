@@ -59,7 +59,7 @@ class BasicNeuralNetwork:
         return np.where(x > 0, 1, 0)
 
     def forward(self, inputs: npt.ArrayLike):
-        self.hidden_inputs = np.dot(inputs,self.weights_hidden) + self.bias_hidden
+        self.hidden_inputs = np.dot(inputs.T,self.weights_hidden) + self.bias_hidden
         self.hidden_outputs = self.relu(self.hidden_inputs)
         self.final_inputs = np.dot(self.hidden_outputs, self.weights) + self.bias
         self.final_outputs = self.final_inputs
@@ -81,7 +81,9 @@ class BasicNeuralNetwork:
         self.weights += np.dot(self.hidden_outputs.T, output_delta) * learning_rate
         self.bias += np.sum(output_delta, axis=0, keepdims=True) * learning_rate
 
-        self.weights_hidden += np.dot(inputs.T, hidden_delta) * learning_rate
+        print(np.size(inputs))
+        print(np.size(hidden_delta))
+        self.weights_hidden += np.dot(inputs, hidden_delta) * learning_rate
         self.bias_hidden += np.sum(hidden_delta, axis=0, keepdims=True) * learning_rate
 
         # Mean squared error

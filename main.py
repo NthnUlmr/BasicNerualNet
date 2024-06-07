@@ -38,6 +38,53 @@ import numpy.typing as npt
 import matplotlib.pyplot as plt
 
 
+
+def load_data(path: str) -> list:
+
+    # Data is assumed to be formatted as follows:
+    # 0. All data is ascii
+    # 1. Each image consists of consecutive rows starting with a number
+    # 2. Only image data rows start with a number
+    # 3. Data Labels for the image follow the corresponding block of image data and their lines start with a space
+    # 4. Image data is either 0 or 1 for each pixel in a 32 by 32 grid
+
+    with open(path,'r+') as inFile:
+        lines = inFile.readlines()
+
+    data = []
+    labels = []
+    numIdx = 0
+
+    for line in lines:
+        line = line.strip('\n')
+        if line.isnumeric():
+            # Row of Image Data
+            if len(data) <= numIdx:
+                data.append([])
+            for dig in line:
+                data[numIdx].append(int(dig))
+        elif line[1:].isnumeric():
+            # Row of Label Data
+            labels.append(int(line[1:]))
+            numIdx = numIdx + 1
+        else:
+            pass # ignore other lines
+
+    data2 = []
+    for line in data:
+        tmpND = np.ndarray((1,len(line)-1), buffer=np.array(line),
+           offset=np.int_().itemsize,
+           dtype=int)
+        data2.append(tmpND)
+
+    assert(len(data) == len(labels))
+
+    return (data2, labels)
+
+
+
+
+
 def generate_data(num_samples: int, num_points: int, freq_range) -> npt.ArrayLike:
     X = np.zeros((num_samples, num_points))
     y = np.zeros(num_samples)
@@ -53,6 +100,38 @@ def generate_data(num_samples: int, num_points: int, freq_range) -> npt.ArrayLik
 
 
 def main():
+
+    training_data_path = 'optical_recognition_of_handwritten_digits/optdigits-orig.tra'
+    (training_data, training_labels) = load_data(training_data_path)
+
+    input_size = len(training_data[0])
+    hidden_size = len(training_data[0])
+    output_size = 1
+    nn = BasicNeuralNetwork(input_size, hidden_size, output_size)
+    learning_rate = 0.01
+
+    losses = []
+    epochs = len(training_data)
+    print_freq = 100
+    for epoch in range(epochs):
+        loss = nn.train(training_data[epoch], training_labels[epoch], learning_rate)
+        losses.append(loss)
+        if epoch % print_freq == 0:
+            print(f"Epoch {epoch}, Loss: {loss:.4f}")
+
+    # Plot the loss
+    plt.figure()
+    plt.plot(losses)
+    plt.title("Training Loss")
+    plt.xlabel("Epoch")
+    plt.ylabel("Loss")
+    plt.show()
+
+
+    import sys
+    sys.exit()
+
+
     np.random.seed(0)
     num_samples = 10
     num_points = 100
