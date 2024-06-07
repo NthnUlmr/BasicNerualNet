@@ -110,6 +110,7 @@ def main():
     nn = BasicNeuralNetwork(input_size, hidden_size, output_size)
     learning_rate = 0.01
 
+    # Train 
     losses = []
     epochs = len(training_data)
     print_freq = 100
@@ -130,54 +131,6 @@ def main():
 
     import sys
     sys.exit()
-
-
-    np.random.seed(0)
-    num_samples = 10
-    num_points = 100
-    freq_range = (1.0, 10.0)  # Frequency range from 1Hz to 10Hz
-    X, y = generate_data(num_samples, num_points, freq_range)
-
-    # Plot some samples
-    plt.figure()
-    print(len(X))
-    for ii in range(len(X)):
-        plt.plot(np.linspace(0, 1, num_points), X[ii])
-    plt.title(f"Sample signal with frequency {y[0]:.2f} Hz")
-    plt.xlabel("Time")
-    plt.ylabel("Amplitude")
-
-    # Normalize data
-    epsilon = 1e-6
-    X_mean = np.mean(X, axis=0)
-    X_std = np.std(X, axis=0)
-    X_std = np.where(X_std==0.0, epsilon, X_std)
-    X = (X - X_mean) / X_std
-    print(X)
-    # Initialize the neural network
-    input_size = num_points
-    hidden_size = 50
-    output_size = 1
-    learning_rate = 0.01
-    epochs = 10
-
-    nn = BasicNeuralNetwork(input_size,hidden_size,output_size)
-
-    # Train the neural network
-    losses = []
-    print_freq = 1
-    for epoch in range(epochs):
-        loss = nn.train(X, y.reshape(-1, 1), learning_rate)
-        losses.append(loss)
-        if epoch % print_freq == 0:
-            print(f"Epoch {epoch}, Loss: {loss:.4f}")
-
-    # Plot the loss
-    plt.figure()
-    plt.plot(losses)
-    plt.title("Training Loss")
-    plt.xlabel("Epoch")
-    plt.ylabel("Loss")
 
     # Generate test data
     X_test, y_test = generate_data(100, num_points, freq_range)
