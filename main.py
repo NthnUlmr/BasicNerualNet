@@ -39,7 +39,7 @@ import matplotlib.pyplot as plt
 
 
 
-def load_data(path: str) -> list:
+def load_data(path: str):
 
     # Data is assumed to be formatted as follows:
     # 0. All data is ascii
@@ -104,13 +104,14 @@ def main():
     training_data_path = 'optical_recognition_of_handwritten_digits/optdigits-orig.tra'
     (training_data, training_labels) = load_data(training_data_path)
 
-    input_size = len(training_data[0])
-    hidden_size = len(training_data[0])
+    print(training_data[0][0])
+    input_size = len(training_data[0][0])
+    hidden_size = len(training_data[0][0])
     output_size = 1
     nn = BasicNeuralNetwork(input_size, hidden_size, output_size)
     learning_rate = 0.01
 
-    # Train 
+    # Train
     losses = []
     epochs = len(training_data)
     print_freq = 100
@@ -126,35 +127,39 @@ def main():
     plt.title("Training Loss")
     plt.xlabel("Epoch")
     plt.ylabel("Loss")
-    plt.show()
 
 
-    import sys
-    sys.exit()
+    test_data_path = 'optical_recognition_of_handwritten_digits/optdigits-orig.cv'
+    (test_data, test_labels) = load_data(test_data_path)
 
-    # Generate test data
-    X_test, y_test = generate_data(100, num_points, freq_range)
-
-    # Normalize test data
-    X_test = (X_test - X_mean) / X_std
-
-    # Predict
-    predictions = nn.forward(X_test)
+    print(type(test_data))
+    predictions = nn.forward(test_data)
 
     # Plot predictions vs true values
     plt.figure()
-    plt.scatter(y_test, predictions)
-    plt.xlabel("True Frequencies")
-    plt.ylabel("Predicted Frequencies")
-    plt.title("True vs Predicted Frequencies")
+    plt.scatter(test_labels, predictions)
+    plt.xlabel("Labels")
+    plt.ylabel("Prediction")
+    plt.title("True vs Predicted Numbers")
 
     plt.figure()
-    plt.plot(y_test-predictions)
-    plt.xlabel("Test Num")
-    plt.ylabel("Frequency Error")
-    plt.title("True vs Predicted Frequencies")
+    test_errs = []
+    test_ids = []
+    for ii in range(len(test_labels)):
+        tmp = test_labels[ii] - np.round(predictions[ii])
+        test_errs.append(tmp[0])
+        test_ids.append(ii)
 
+    plt.scatter(test_ids,test_errs)
+    plt.xlabel("Labels")
+    plt.ylabel("Prediction")
+    plt.title("True vs Predicted Numbers")
+
+
+    plt.figure()
+    plt.hist(test_errs)
     plt.show()
+
 
 
 if __name__ == '__main__':
