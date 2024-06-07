@@ -65,7 +65,9 @@ def load_data(path: str):
                 data[numIdx].append(int(dig))
         elif line[1:].isnumeric():
             # Row of Label Data
-            labels.append(int(line[1:]))
+            digimon = [0.0]*10
+            digimon[int(line[1:])] = 1.0
+            labels.append(digimon)
             numIdx = numIdx + 1
         else:
             pass # ignore other lines
@@ -107,7 +109,7 @@ def main():
     print(training_data[0][0])
     input_size = len(training_data[0][0])
     hidden_size = len(training_data[0][0])
-    output_size = 1
+    output_size = 10
     nn = BasicNeuralNetwork(input_size, hidden_size, output_size)
     learning_rate = 0.01
 
@@ -137,7 +139,7 @@ def main():
 
     # Plot predictions vs true values
     plt.figure()
-    plt.scatter(test_labels, predictions)
+    plt.scatter(np.argmax(test_labels,axis=1), np.argmax(predictions,axis=2))
     plt.xlabel("Labels")
     plt.ylabel("Prediction")
     plt.title("True vs Predicted Numbers")
@@ -146,8 +148,8 @@ def main():
     test_errs = []
     test_ids = []
     for ii in range(len(test_labels)):
-        tmp = test_labels[ii] - np.round(predictions[ii])
-        test_errs.append(tmp[0])
+        tmp = np.argmax(test_labels[ii]) - (np.argmax(predictions[ii]))
+        test_errs.append(tmp)
         test_ids.append(ii)
 
     plt.scatter(test_ids,test_errs)
@@ -158,6 +160,9 @@ def main():
 
     plt.figure()
     plt.hist(test_errs)
+    plt.title("Histogram of Testing Error")
+    plt.xlabel("Error in Prediction")
+    plt.ylabel("Count")
     plt.show()
 
 

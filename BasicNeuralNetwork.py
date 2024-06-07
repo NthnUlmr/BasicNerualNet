@@ -62,7 +62,7 @@ class BasicNeuralNetwork:
 
     def forward(self, inputs: npt.ArrayLike):
         self.hidden_inputs = np.dot(inputs,self.weights_hidden) + self.bias_hidden
-        self.hidden_outputs = self.relu(self.hidden_inputs)
+        self.hidden_outputs = self.sigmoid(self.hidden_inputs)
         self.final_inputs = np.dot(self.hidden_outputs, self.weights) + self.bias
         self.final_outputs = self.final_inputs
         return self.final_outputs
@@ -77,7 +77,7 @@ class BasicNeuralNetwork:
 
         # Backpropagation
         hidden_errors = np.dot(output_delta, self.weights.T)
-        hidden_delta = np.multiply(hidden_errors,  self.relu_derivative(self.hidden_outputs))
+        hidden_delta = np.multiply(hidden_errors,  self.sigmoid_derivative(self.hidden_outputs))
 
         # Update weights and biases
         self.weights += np.dot(self.hidden_outputs.T, output_delta) * learning_rate
